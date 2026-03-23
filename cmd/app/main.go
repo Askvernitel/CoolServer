@@ -1,9 +1,6 @@
 package main
 
-import "github.com/gin-gonic/gin"
-
-
-func main(){ 
-	router := gin.Default();
+func main() {
+	//_ := gin.Default()
 
 }
