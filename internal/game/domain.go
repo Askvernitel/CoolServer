@@ -10,24 +10,37 @@ type GameState struct {
 	players []*Player
 }
 
-func (gs *GameState) Update(ops []Operation) {
+func (gs *GameState) Update(ops []OperationBundle) {
 	gs.applyOperations(ops)
 }
 
-func (gs *GameState) applyOperations(ops []Operation) {
+func (gs *GameState) applyOperations(ops []OperationBundle) {
 	for _, op := range ops {
-		player := gs.getPlayerById(Id(op.GetCaller()))
+		gs.handleOperationBundle(op)
 
-		switch op.GetType() {
-		case RUN_LEFT_OPERATION:
-			player.MoveLeft()
-		case RUN_RIGHT_OPERATION:
-			player.MoveRight()
-		case RUN_UP_OPERATION:
-			player.MoveUp()
-		case RUN_DOWN_OPERATION:
-			player.MoveDown()
-		}
+	}
+}
+func (gs *GameState) handleOperationBundle(opb OperationBundle) {
+	for _, op := range opb.GetOperations() {
+		gs.handleOperation(opb.GetCaller(), op)
+	}
+}
+func (gs *GameState) handleOperation(caller OperationCaller, op Operation) {
+	p := gs.getPlayerById(Id(caller))
+	switch op.GetType() {
+	case RUN_RIGHT_OPERATION:
+		p.MoveRight()
+	case RUN_LEFT_OPERATION:
+		p.MoveLeft()
+	case RUN_UP_OPERATION:
+		p.MoveUp()
+	case RUN_DOWN_OPERATION:
+		p.MoveDown()
+	}
+}
+func (gs *GameState) GetState() *GameStateData {
+	return &GameStateData{
+		Players: gs.players,
 	}
 }
 
@@ -55,16 +68,9 @@ func (p *Player) NewPlayer(x float32, y float32, speed float32) *Player {
 		Speed: speed,
 	}
 }
-func (p *Player) Write() {
-
-}
-func (p *Player) Read() {
-
-}
 func (p *Player) MoveRight() {
 	p.X += p.Speed
 }
-
 func (p *Player) MoveLeft() {
 	p.X -= p.Speed
 }
@@ -75,40 +81,63 @@ func (p *Player) MoveDown() {
 	p.Y -= p.Speed
 }
 
+type GameStateData struct {
+	Players []*Player `json:"player"`
+}
+
+func (gsd *GameStateData) GetData() *GameStateData {
+	return &GameStateData{}
+}
+
+type GameOperationBundle struct {
+	Ops    []*GameOperation `json:"operations"`
+	Caller OperationCaller  `json:"caller"`
+}
+
+func (gob *GameOperationBundle) GetOperations() []Operation {
+	ops := []Operation{}
+	for _, gop := range gob.Ops {
+		ops = append(ops, gop)
+	}
+
+	return ops
+}
+func (gob *GameOperationBundle) GetCaller() OperationCaller {
+	return gob.Caller
+}
+
 type GameOperation struct {
-	t OperationType `json:"type"`
+	Type   OperationType   `json:"type"`
+	Caller OperationCaller `json:"caller"`
 }
 
 func (g *GameOperation) GetType() OperationType {
-	return g.t
-}
-func (g *GameOperation) GetCaller() OperationCaller {
-
+	return g.Type
 }
 
 type Conn struct {
-	Conn *websocket.Conn
-	q    []Operation
+	Conn      *websocket.Conn
+	opBundles []OperationBundle
 }
 
 func NewConn(conn *websocket.Conn) *Conn {
 	return &Conn{Conn: conn}
 }
 
-func (c *Conn) WriteState() {
-	//c.Conn.WriteJSON()
+func (c *Conn) Write(s *GameStateData) {
+	c.Conn.WriteJSON(s)
 }
 
-func (c *Conn) ReadOperations() []Operation {
-	return c.q
+func (c *Conn) ReadOperations() []OperationBundle {
+	return c.opBundles
 }
 
 func (c *Conn) Flush() {
-	c.q = nil
+	c.opBundles = nil
 }
 
 func (c *Conn) Read() {
-	op := &GameOperation{}
+	op := &GameOperationBundle{}
 	c.Conn.ReadJSON(op)
-	c.q = append(c.q, op)
+	c.opBundles = append(c.opBundles, op)
 }

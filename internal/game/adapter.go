@@ -8,9 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var globalGame = GameInstance{
-
-}
+var globalGame = &GameInstance{}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -21,11 +19,11 @@ var upgrader = websocket.Upgrader{
 }
 
 type Adapter struct {
-	t *Ticker
+	ticker *Ticker
 }
 
-func NewAdapter() {
-
+func NewAdapter(ticker *Ticker) *Adapter {
+	return &Adapter{ticker: ticker}
 }
 
 func (a *Adapter) Create(c *gin.Context) {
@@ -41,12 +39,13 @@ func (a *Adapter) Connect(c *gin.Context) {
 		return
 	}
 
-	NewConn(conn)
-
+	upConn := NewConn(conn)
+	globalGame.AddConn(upConn)
 }
 
 func (a *Adapter) Start() {
-	a.t.start()
+	a.ticker.AddGameInstance(globalGame)
+	a.ticker.start()
 }
 
 func (a *Adapter) Remove(c *gin.Context) {

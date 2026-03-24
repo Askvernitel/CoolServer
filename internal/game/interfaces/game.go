@@ -12,7 +12,11 @@ const (
 )
 
 type Updatable interface {
-	Update([]Operation)
+	Update([]OperationBundle)
+}
+
+type WithData interface {
+	GetData() []map[string]any
 }
 
 type State interface {
@@ -21,5 +25,8 @@ type State interface {
 
 type Operation interface {
 	GetType() OperationType
+}
+type OperationBundle interface {
+	GetOperations() []Operation
 	GetCaller() OperationCaller
 }

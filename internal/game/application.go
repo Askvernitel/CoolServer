@@ -1,7 +1,6 @@
 package game
 
 import (
-	"log"
 	. "project_go/internal/game/interfaces"
 	"time"
 )
@@ -36,27 +35,32 @@ func (t *Ticker) update() {
 }
 
 func (t *Ticker) AddGameInstance(game *GameInstance) {
-	err := append(t.games, game)
-
-	if err != nil {
-		log.Println("Error in Ticker")
-		return
-	}
+	t.games = append(t.games, game)
 }
 
 type GameInstance struct {
 	conns []*Conn
 
-	s State
+	gameState *GameState
+}
+
+func (gi *GameInstance) AddConn(conn *Conn) {
+	gi.conns = append(gi.conns, conn)
 }
 
 func (gi *GameInstance) Update() {
 	ops := gi.getOperations()
-	gi.s.Update(ops)
-}
+	gi.gameState.Update(ops)
+	gi.WriteGameState()
 
-func (gi *GameInstance) getOperations() []Operation {
-	ops := []Operation{}
+}
+func (gi *GameInstance) UpdateClient() {
+	for _, conn := range gi.conns {
+		conn.Write(gi.gameState.GetState())
+	}
+}
+func (gi *GameInstance) getOperations() []OperationBundle {
+	ops := []OperationBundle{}
 
 	for _, op := range gi.conns {
 		ops = append(ops, op.ReadOperations()...)
@@ -64,4 +68,10 @@ func (gi *GameInstance) getOperations() []Operation {
 	}
 
 	return ops
+}
+
+func (gi *GameInstance) WriteGameState() {
+	for _, conn := range gi.conns {
+		conn.Write(gi.gameState.GetState())
+	}
 }
