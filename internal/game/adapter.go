@@ -8,7 +8,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var globalGame = &GameInstance{}
+var globalGame = &GameInstance{
+	conns:     []*Conn{},
+	gameState: &GameState{},
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -35,12 +38,13 @@ func (a *Adapter) Connect(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 
 	if err != nil {
-		log.Println("connection failed")
+		log.Println("connection failed", err)
 		return
 	}
 
 	upConn := NewConn(conn)
 	globalGame.AddConn(upConn)
+	go upConn.Read()
 }
 
 func (a *Adapter) Start() {

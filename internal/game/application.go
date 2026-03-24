@@ -1,6 +1,7 @@
 package game
 
 import (
+	"log"
 	. "project_go/internal/game/interfaces"
 	"time"
 )
@@ -46,10 +47,19 @@ type GameInstance struct {
 
 func (gi *GameInstance) AddConn(conn *Conn) {
 	gi.conns = append(gi.conns, conn)
+
+	//NOTE: Maybe separate this
+	gi.gameState.AddPlayer(&Player{
+		Id:    Id("Daniel"),
+		X:     0,
+		Y:     0,
+		Speed: 200,
+	})
 }
 
 func (gi *GameInstance) Update() {
 	ops := gi.getOperations()
+	log.Printf("Operations: %v\n", ops)
 	gi.gameState.Update(ops)
 	gi.WriteGameState()
 

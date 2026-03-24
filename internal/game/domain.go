@@ -1,6 +1,7 @@
 package game
 
 import (
+	"log"
 	. "project_go/internal/game/interfaces"
 
 	"github.com/gorilla/websocket"
@@ -42,6 +43,10 @@ func (gs *GameState) GetState() *GameStateData {
 	return &GameStateData{
 		Players: gs.players,
 	}
+}
+
+func (gs *GameState) AddPlayer(p *Player) {
+	gs.players = append(gs.players, p)
 }
 
 func (gs *GameState) getPlayerById(id Id) *Player {
@@ -107,8 +112,7 @@ func (gob *GameOperationBundle) GetCaller() OperationCaller {
 }
 
 type GameOperation struct {
-	Type   OperationType   `json:"type"`
-	Caller OperationCaller `json:"caller"`
+	Type OperationType `json:"type"`
 }
 
 func (g *GameOperation) GetType() OperationType {
@@ -129,15 +133,22 @@ func (c *Conn) Write(s *GameStateData) {
 }
 
 func (c *Conn) ReadOperations() []OperationBundle {
+
 	return c.opBundles
 }
 
 func (c *Conn) Flush() {
-	c.opBundles = nil
+	c.opBundles = []OperationBundle{}
 }
 
 func (c *Conn) Read() {
-	op := &GameOperationBundle{}
-	c.Conn.ReadJSON(op)
-	c.opBundles = append(c.opBundles, op)
+	for {
+		op := &GameOperationBundle{}
+		err := c.Conn.ReadJSON(op)
+		if err != nil {
+			log.Printf("Connection Read Error %v", err)
+		}
+
+		c.opBundles = append(c.opBundles, op)
+	}
 }
