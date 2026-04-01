@@ -1,10 +1,8 @@
-package game
+package domain
 
 import (
-	"log"
 	. "project_go/internal/game/interfaces"
-
-	"github.com/gorilla/websocket"
+	"slices"
 )
 
 type GameState struct {
@@ -18,7 +16,6 @@ func (gs *GameState) Update(ops []OperationBundle) {
 func (gs *GameState) applyOperations(ops []OperationBundle) {
 	for _, op := range ops {
 		gs.handleOperationBundle(op)
-
 	}
 }
 func (gs *GameState) handleOperationBundle(opb OperationBundle) {
@@ -48,6 +45,13 @@ func (gs *GameState) GetState() *GameStateData {
 func (gs *GameState) AddPlayer(p *Player) {
 	gs.players = append(gs.players, p)
 }
+func (gs *GameState) RemovePlayer(p *Player) {
+	delIndex := slices.Index(gs.players, p)
+	if delIndex == -1 {
+		return
+	}
+	slices.Delete(gs.players, delIndex, delIndex+1)
+}
 
 func (gs *GameState) getPlayerById(id Id) *Player {
 
@@ -60,10 +64,10 @@ func (gs *GameState) getPlayerById(id Id) *Player {
 }
 
 type Player struct {
-	Id    Id
-	X     float32
-	Y     float32
-	Speed float32
+	Id    Id      `json:"id"`
+	X     float32 `json:"x"`
+	Y     float32 `json:"y"`
+	Speed float32 `json:"speed"`
 }
 
 func (p *Player) NewPlayer(x float32, y float32, speed float32) *Player {
@@ -87,68 +91,9 @@ func (p *Player) MoveDown() {
 }
 
 type GameStateData struct {
-	Players []*Player `json:"player"`
+	Players []*Player `json:"players"`
 }
 
 func (gsd *GameStateData) GetData() *GameStateData {
 	return &GameStateData{}
-}
-
-type GameOperationBundle struct {
-	Ops    []*GameOperation `json:"operations"`
-	Caller OperationCaller  `json:"caller"`
-}
-
-func (gob *GameOperationBundle) GetOperations() []Operation {
-	ops := []Operation{}
-	for _, gop := range gob.Ops {
-		ops = append(ops, gop)
-	}
-
-	return ops
-}
-func (gob *GameOperationBundle) GetCaller() OperationCaller {
-	return gob.Caller
-}
-
-type GameOperation struct {
-	Type OperationType `json:"type"`
-}
-
-func (g *GameOperation) GetType() OperationType {
-	return g.Type
-}
-
-type Conn struct {
-	Conn      *websocket.Conn
-	opBundles []OperationBundle
-}
-
-func NewConn(conn *websocket.Conn) *Conn {
-	return &Conn{Conn: conn}
-}
-
-func (c *Conn) Write(s *GameStateData) {
-	c.Conn.WriteJSON(s)
-}
-
-func (c *Conn) ReadOperations() []OperationBundle {
-
-	return c.opBundles
-}
-
-func (c *Conn) Flush() {
-	c.opBundles = []OperationBundle{}
-}
-
-func (c *Conn) Read() {
-	for {
-		op := &GameOperationBundle{}
-		err := c.Conn.ReadJSON(op)
-		if err != nil {
-			log.Printf("Connection Read Error %v", err)
-		}
-
-		c.opBundles = append(c.opBundles, op)
-	}
 }

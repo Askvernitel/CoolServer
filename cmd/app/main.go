@@ -1,7 +1,8 @@
 package main
 
 import (
-	. "project_go/internal/game"
+	. "project_go/internal/game/adapter"
+	. "project_go/internal/game/application"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,8 +1,8 @@
 package interfaces
 
 type OperationType int
-type OperationCaller string
-type Id string
+type OperationCaller int
+type Id int
 
 const (
 	RUN_RIGHT_OPERATION = iota
@@ -13,6 +13,14 @@ const (
 
 type Updatable interface {
 	Update([]OperationBundle)
+}
+
+type ReadConn interface {
+	Read()
+}
+
+type WriteConn interface {
+	Write(any)
 }
 
 type WithData interface {

@@ -1,16 +1,18 @@
-package game
+package adapter
 
 import (
 	"log"
 	"net/http"
+	. "project_go/internal/game/application"
+	. "project_go/internal/game/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
 var globalGame = &GameInstance{
-	conns:     []*Conn{},
-	gameState: &GameState{},
+	Conns:     []*Conn{},
+	GameState: &GameState{},
 }
 
 var upgrader = websocket.Upgrader{
@@ -21,19 +23,20 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type Adapter struct {
+type HttpAdapter struct {
 	ticker *Ticker
 }
 
-func NewAdapter(ticker *Ticker) *Adapter {
-	return &Adapter{ticker: ticker}
+func NewAdapter(ticker *Ticker) *HttpAdapter {
+	return &HttpAdapter{ticker: ticker}
 }
 
-func (a *Adapter) Create(c *gin.Context) {
+func (a *HttpAdapter) Create(c *gin.Context) {
 	c.Request.GetBody()
+
 }
 
-func (a *Adapter) Connect(c *gin.Context) {
+func (a *HttpAdapter) Connect(c *gin.Context) {
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 
@@ -47,15 +50,15 @@ func (a *Adapter) Connect(c *gin.Context) {
 	go upConn.Read()
 }
 
-func (a *Adapter) Start() {
+func (a *HttpAdapter) Start() {
 	a.ticker.AddGameInstance(globalGame)
-	a.ticker.start()
+	a.ticker.Start()
 }
 
-func (a *Adapter) Remove(c *gin.Context) {
+func (a *HttpAdapter) Remove(c *gin.Context) {
 
 }
 
-func (a *Adapter) Update() {
+func (a *HttpAdapter) Update() {
 
 }
