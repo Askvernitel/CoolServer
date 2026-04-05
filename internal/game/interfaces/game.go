@@ -23,6 +23,13 @@ type WriteConn interface {
 	Write(any)
 }
 
+type ReadWriteConn interface {
+	ReadConn
+	WriteConn
+	ReadOperations() []OperationBundle
+	Flush()
+}
+
 type WithData interface {
 	GetData() []map[string]any
 }

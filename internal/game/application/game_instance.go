@@ -7,11 +7,11 @@ import (
 )
 
 type GameInstance struct {
-	Conns     []*Conn
+	Conns     []ReadWriteConn
 	GameState *GameState
 }
 
-func (gi *GameInstance) AddConn(conn *Conn) {
+func (gi *GameInstance) AddConn(conn ReadWriteConn) {
 	gi.Conns = append(gi.Conns, conn)
 
 	//NOTE: Separate this
@@ -29,7 +29,7 @@ func (gi *GameInstance) AddConn(conn *Conn) {
 	})
 }
 
-func (gi *GameInstance) RemoveConn(conn *Conn) {
+func (gi *GameInstance) RemoveConn(conn ReadWriteConn) {
 	delIndex := slices.Index(gi.Conns, conn)
 	if delIndex == -1 {
 		return

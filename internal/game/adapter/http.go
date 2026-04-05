@@ -5,13 +5,14 @@ import (
 	"net/http"
 	. "project_go/internal/game/application"
 	. "project_go/internal/game/domain"
+	. "project_go/internal/game/interfaces"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
 var globalGame = &GameInstance{
-	Conns:     []*Conn{},
+	Conns:     []ReadWriteConn{},
 	GameState: &GameState{},
 }
 
